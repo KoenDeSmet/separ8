@@ -241,7 +241,7 @@ select.inp option{background:var(--s2)}
       <circle cx="18" cy="20.5" r="2.5" fill="none" stroke="#c8f04a" stroke-width="1.2"/>
     </svg>
     <div class="logo">Separ<span>8</span></div>
-    <div style="font-family:var(--d);font-size:9px;font-weight:700;color:var(--mt);letter-spacing:.08em;margin-top:2px">v1.3</div>
+    <div style="font-family:var(--d);font-size:9px;font-weight:700;color:var(--mt);letter-spacing:.08em;margin-top:2px">v1.4</div>
     <div class="hdr-right">
       <div class="api-indicator nok" id="api-ind" onclick="resetApiKey()" title="Klik om API-sleutel te wijzigen">API ●</div>
     </div>
@@ -654,12 +654,13 @@ function resetApiKey() {
 
 // ── Anthropic API call ─────────────────────────────────────────────────
 async function claude(messages, max_tokens = 1500) {
-  const res = await fetch('/.netlify/functions/claude', {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01'
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
@@ -672,7 +673,7 @@ async function claude(messages, max_tokens = 1500) {
     throw new Error(`HTTP ${res.status}: ${txt.slice(0, 200)}`);
   }
   const text = await res.text();
-  if (!text || text.trim() === '') throw new Error('Lege response van server. Probeer opnieuw.');
+  if (!text || text.trim() === '') throw new Error('Lege response. Probeer opnieuw.');
   let data;
   try { data = JSON.parse(text); } catch(e) { throw new Error('Ongeldige response: ' + text.slice(0, 100)); }
   if (data.error) throw new Error(data.error.message);
