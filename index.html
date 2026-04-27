@@ -190,6 +190,33 @@ select.inp option{background:var(--s2)}
 .hidden{display:none!important}
 .mt{color:var(--mt2);font-size:12px}
 .empty{text-align:center;padding:36px 16px;color:var(--mt2);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:10px}
+
+/* Listing detail modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,10,15,.95);z-index:150;overflow-y:auto;padding:16px 16px 40px}
+.modal-card{background:var(--s1);border:1px solid var(--b2);border-radius:16px;overflow:hidden;max-width:480px;margin:0 auto}
+.modal-hdr{padding:14px 16px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:8px}
+.modal-body{padding:16px;display:flex;flex-direction:column;gap:14px}
+
+/* URL badges */
+.url-list{display:flex;flex-direction:column;gap:6px}
+.url-item{display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:8px 10px}
+.url-platform{font-family:var(--d);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:rgba(200,240,74,.12);color:var(--acc);padding:2px 7px;border-radius:4px;flex-shrink:0}
+.url-link{font-size:11px;color:var(--mt2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}
+.url-link:hover{color:var(--acc2)}
+.url-status{font-size:9px;font-family:var(--d);font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0}
+.url-status.actief{background:rgba(200,240,74,.15);color:var(--acc)}
+.url-status.verkocht{background:rgba(74,240,184,.15);color:var(--acc2)}
+.url-status.onbekend{background:rgba(144,144,168,.15);color:var(--mt2)}
+.url-del{background:none;border:none;color:var(--mt);cursor:pointer;font-size:14px;padding:0 2px;flex-shrink:0}
+.url-del:hover{color:var(--danger)}
+
+/* Listing kaart status strip */
+.lcard-strip{height:3px;background:var(--acc);border-radius:3px 3px 0 0}
+.lcard-strip.verkocht{background:var(--acc2)}
+.lcard-strip.inactief{background:var(--mt)}
+
+/* Inbox mail koppeling badge */
+.mail-listing-badge{font-size:9px;font-family:var(--d);background:rgba(200,240,74,.1);color:var(--acc);border:1px solid rgba(200,240,74,.2);border-radius:4px;padding:1px 6px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -241,7 +268,7 @@ select.inp option{background:var(--s2)}
       <circle cx="18" cy="20.5" r="2.5" fill="none" stroke="#c8f04a" stroke-width="1.2"/>
     </svg>
     <div class="logo">Separ<span>8</span></div>
-    <div style="font-family:var(--d);font-size:9px;font-weight:700;color:var(--mt);letter-spacing:.08em;margin-top:2px">v1.3</div>
+    <div style="font-family:var(--d);font-size:9px;font-weight:700;color:var(--mt);letter-spacing:.08em;margin-top:2px">v1.6</div>
     <div class="hdr-right">
       <div class="api-indicator nok" id="api-ind" onclick="resetApiKey()" title="Klik om API-sleutel te wijzigen">API ●</div>
     </div>
@@ -459,9 +486,84 @@ select.inp option{background:var(--s2)}
     <!-- ── TAB LISTINGS ── -->
     <div id="tab-listings" class="hidden">
       <div class="card">
-        <div class="ch"><div class="ct">Mijn listings</div></div>
+        <div class="ch">
+          <div class="ct">Mijn listings</div>
+          <div id="sync-listings-status" style="font-size:10px;color:var(--mt);font-family:var(--d);margin-left:auto"></div>
+        </div>
         <div class="cb" id="lb">
           <div class="empty"><div style="font-size:28px">📋</div>Nog geen listings.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Listing detail modal -->
+    <div class="modal-overlay hidden" id="listing-modal">
+      <div class="modal-card">
+        <div class="modal-hdr">
+          <div class="ct" id="modal-titel-hdr">Listing</div>
+          <button onclick="sluitModal()" style="margin-left:auto;background:none;border:none;color:var(--mt2);font-size:20px;cursor:pointer;line-height:1">×</button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Tekst bewerken -->
+          <div class="fl">
+            <div class="lbl">Titel</div>
+            <div class="out" id="modal-titel" contenteditable="true" style="font-size:14px"></div>
+          </div>
+          <div class="fl">
+            <div class="lbl">Beschrijving</div>
+            <div class="out" id="modal-beschr" contenteditable="true" style="min-height:90px;font-size:13px"></div>
+          </div>
+          <div class="brow">
+            <div class="fl" style="flex:1">
+              <div class="lbl">Prijs</div>
+              <input class="inp" type="text" id="modal-prijs">
+            </div>
+            <div class="fl" style="flex:1">
+              <div class="lbl">Staat</div>
+              <select class="inp" id="modal-staat">
+                <option>Goede staat</option><option>Zeer goede staat</option>
+                <option>Als nieuw</option><option>Nieuw met label</option><option>Lichte gebruikssporen</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Platform links -->
+          <div class="fl">
+            <div class="lbl">Gepubliceerd op</div>
+            <div class="url-list" id="modal-urls"></div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <select class="inp" id="modal-url-platform" style="flex:1;font-size:12px">
+                <option>Vinted</option>
+                <option>2dehands.be</option>
+                <option>eBay</option>
+                <option>Facebook Marketplace</option>
+              </select>
+              <input class="inp" type="url" id="modal-url-input" placeholder="https://..." style="flex:2;font-size:12px">
+              <button class="btn bp bsm" onclick="voegUrlToe()" style="width:auto;padding:9px 14px;flex-shrink:0">+</button>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="fl">
+            <div class="lbl">Status</div>
+            <select class="inp" id="modal-status">
+              <option value="actief">Actief</option>
+              <option value="verkocht">Verkocht</option>
+              <option value="inactief">Inactief</option>
+            </select>
+          </div>
+
+          <!-- Gekoppelde inbox berichten -->
+          <div class="fl" id="modal-mails-sect">
+            <div class="lbl">Gekoppelde berichten</div>
+            <div id="modal-mails-list" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+
+          <div class="brow">
+            <button class="btn bs" onclick="slaModalOp()">✓ Opslaan</button>
+            <button class="btn bg bsm" onclick="sluitModal()">Annuleren</button>
+          </div>
         </div>
       </div>
     </div>
@@ -663,7 +765,7 @@ async function claude(messages, max_tokens = 1500) {
       'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
+      model: 'claude-sonnet-4-20250514',
       max_tokens,
       messages
     })
@@ -893,8 +995,16 @@ function goedkeuren() {
   const pl = document.querySelector('.pi.sel')?.dataset.p || '';
   navigator.clipboard.writeText(`${t}\n\n${b}\n\nPrijs: ${pr}\nStaat: ${staat}`).catch(() => {});
   S.listings.unshift({
-    id: Date.now(), titel: t, beschrijving: b, prijs: pr, staat, platform: pl,
-    datum: new Date().toLocaleDateString('nl-BE'), status: 'actief', aantalFotos: S.fotos.length
+    id: Date.now(),
+    titel: t,
+    beschrijving: b,
+    prijs: pr,
+    staat,
+    platformAdvies: pl,
+    links: [],           // array van {platform, url, status}
+    datum: new Date().toLocaleDateString('nl-BE'),
+    status: 'actief',
+    aantalFotos: S.fotos.length
   });
   badges(); saveAll();
   document.getElementById('fase-upload').classList.add('hidden');
@@ -1025,13 +1135,20 @@ function mailEl(m) {
   const el = document.createElement('div');
   el.className = 'mail-item' + (m.gelezen ? '' : ' unread');
   const t = m.datum ? new Date(m.datum).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+  const gekoppeld = m.listingId ? S.listings.find(l => l.id === m.listingId) : null;
   el.innerHTML = `
     <div class="mmeta">
       <span class="mbadge">${m.platform || 'Mail'}</span>
       <span class="mtime">${t}</span>
     </div>
     <div style="font-weight:500;font-size:14px">${m.subject || '(geen onderwerp)'}</div>
-    <div style="font-size:12px;color:var(--mt2)">${m.snippet || ''}</div>`;
+    <div style="font-size:12px;color:var(--mt2)">${m.snippet || ''}</div>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+      ${gekoppeld
+        ? `<span class="mail-listing-badge" onclick="event.stopPropagation();openModal(${gekoppeld.id})">📋 ${gekoppeld.titel.slice(0,25)}${gekoppeld.titel.length>25?'…':''}</span>`
+        : `<button onclick="event.stopPropagation();koppelenAanListing('${m.id}')" style="background:none;border:1px dashed var(--b2);border-radius:4px;color:var(--mt);font-size:10px;padding:2px 7px;cursor:pointer;font-family:var(--f)">+ Koppel aan listing</button>`
+      }
+    </div>`;
   el.onclick = () => openMail(m);
   return el;
 }
@@ -1092,23 +1209,55 @@ function sluitA() { document.getElementById('antw-card').classList.add('hidden')
 // ── Listings ───────────────────────────────────────────────────────────
 function renderL() {
   const el = document.getElementById('lb');
-  const a = S.listings.filter(l => l.status === 'actief');
-  if (!a.length) { el.innerHTML = '<div class="empty"><div style="font-size:28px">📋</div>Nog geen listings.</div>'; return; }
-  el.innerHTML = a.map(l => `
-    <div class="lcard">
-      <div style="font-weight:500;font-size:14px">${l.titel}</div>
-      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
-        <span class="mbadge">${l.platform}</span>
-        <span class="sc act">Actief</span>
-        ${l.aantalFotos ? `<span style="font-size:10px;color:var(--mt2)">${l.aantalFotos} foto's</span>` : ''}
-        <span style="font-size:11px;color:var(--mt2);margin-left:auto">${l.datum}</span>
+  const actief = S.listings.filter(l => l.status !== 'verkocht');
+  if (!actief.length) {
+    el.innerHTML = '<div class="empty"><div style="font-size:28px">📋</div>Nog geen listings.<br><span style="font-size:11px;color:var(--mt)">Maak een nieuw item aan om te starten.</span></div>';
+    return;
+  }
+  el.innerHTML = actief.map(l => {
+    const links = l.links || [];
+    const linkHtml = links.length
+      ? links.map(lk => `<a href="${lk.url}" target="_blank" class="url-item" style="text-decoration:none">
+          <span class="url-platform">${lk.platform}</span>
+          <span class="url-link">${lk.url}</span>
+          <span class="url-status ${lk.status||'actief'}">${lk.status||'actief'}</span>
+        </a>`).join('')
+      : `<div style="font-size:11px;color:var(--mt);font-style:italic">Nog geen links — klik op Bewerken om toe te voegen</div>`;
+    // Gekoppelde berichten
+    const gekoppeld = S.mails.filter(m => m.listingId === l.id);
+    const mailHtml = gekoppeld.length
+      ? `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">${gekoppeld.map(m =>
+          `<span class="mail-listing-badge" onclick="openMailVanListing(${JSON.stringify(m.id)})">${m.platform||'Mail'}: ${(m.snippet||'').slice(0,30)}…</span>`
+        ).join('')}</div>` : '';
+    const stripClass = l.status === 'verkocht' ? 'verkocht' : l.status === 'inactief' ? 'inactief' : '';
+    return `<div class="lcard" style="padding:0;overflow:hidden">
+      <div class="lcard-strip ${stripClass}"></div>
+      <div style="padding:12px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div style="font-weight:600;font-size:14px;line-height:1.4">${l.titel}</div>
+          <span class="sc ${l.status==='actief'?'act':'verk'}" style="flex-shrink:0">${l.status||'actief'}</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:13px;font-weight:600;color:var(--acc)">${l.prijs}</span>
+          <span style="font-size:11px;color:var(--mt2)">· ${l.staat}</span>
+          <span style="font-size:10px;color:var(--mt);margin-left:auto">${l.datum}</span>
+        </div>
+        <div class="url-list">${linkHtml}</div>
+        ${mailHtml}
+        <div class="brow" style="margin-top:2px">
+          <button class="btn bg bsm" onclick="openModal(${l.id})">✎ Bewerken</button>
+          <button class="btn bg bsm" onclick="cpL(${l.id})">⎘ Kopieer tekst</button>
+        </div>
       </div>
-      <div style="font-size:12px;color:var(--mt2)">${l.prijs} · ${l.staat}</div>
-      <div class="brow" style="margin-top:4px">
-        <button class="btn bg bsm" onclick="cpL(${l.id})">⎘ Kopieer</button>
-        <button class="btn bsm" style="background:rgba(74,240,184,.15);color:var(--acc2);font-family:var(--d);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase" onclick="mkV(${l.id})">✓ Verkocht</button>
-      </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+function openMailVanListing(mailId) {
+  const m = S.mails.find(x => x.id === mailId);
+  if (!m) return;
+  st('inbox');
+  setTimeout(() => openMail(m), 100);
 }
 
 function cpL(id) {
@@ -1145,25 +1294,160 @@ function renderVerk() {
   const el = document.getElementById('vb');
   const v = S.listings.filter(l => l.status === 'verkocht');
   if (!v.length) { el.innerHTML = '<div class="empty"><div style="font-size:28px">📦</div>Nog geen verkopen.</div>'; return; }
-  el.innerHTML = v.map(l => `
-    <div class="lcard">
-      <div style="font-weight:500;font-size:14px">${l.titel}</div>
-      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
-        <span class="mbadge">${l.platform}</span>
-        <span class="sc verk">Verkocht</span>
-        <span style="font-size:11px;color:var(--mt2);margin-left:auto">${l.verkochtDatum || l.datum}</span>
+  el.innerHTML = v.map(l => {
+    const links = (l.links||[]).map(lk =>
+      `<a href="${lk.url}" target="_blank" class="url-item" style="text-decoration:none">
+        <span class="url-platform">${lk.platform}</span>
+        <span class="url-link">${lk.url}</span>
+        <span class="url-status verkocht">verkocht</span>
+      </a>`).join('');
+    return `<div class="lcard" style="padding:0;overflow:hidden">
+      <div class="lcard-strip verkocht"></div>
+      <div style="padding:12px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div style="font-weight:600;font-size:14px">${l.titel}</div>
+          <span class="sc verk">Verkocht</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:13px;font-weight:600;color:var(--acc2)">${l.prijs}</span>
+          <span style="font-size:10px;color:var(--mt);margin-left:auto">${l.verkochtDatum||l.datum}</span>
+        </div>
+        ${links ? `<div class="url-list">${links}</div>` : ''}
+        ${l.verzendInstructies ? `
+          <div class="vcard">
+            <div style="font-size:9px;font-weight:700;color:var(--acc2);text-transform:uppercase;letter-spacing:.1em;font-family:var(--d);margin-bottom:7px">Verzend-agent</div>
+            <div style="font-size:12px;line-height:1.7;color:var(--mt2);white-space:pre-wrap">${l.verzendInstructies}</div>
+          </div>` : ''}
+        <button class="btn bg bsm" onclick="openModal(${l.id})" style="margin-top:2px">✎ Bewerken</button>
       </div>
-      <div style="font-size:12px;color:var(--mt2)">${l.prijs}</div>
-      ${l.verzendInstructies ? `
-        <div class="vcard" style="margin-top:8px">
-          <div style="font-size:9px;font-weight:700;color:var(--acc2);text-transform:uppercase;letter-spacing:.1em;font-family:var(--d);margin-bottom:7px">Verzend-agent</div>
-          <div style="font-size:12px;line-height:1.7;color:var(--mt2);white-space:pre-wrap">${l.verzendInstructies}</div>
-        </div>` : ''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── Utils ──────────────────────────────────────────────────────────────
 function cf(id) { navigator.clipboard.writeText(document.getElementById(id).textContent).catch(() => {}); }
+
+// ── Listing modal ──────────────────────────────────────────────────────
+let modalListingId = null;
+
+function openModal(id) {
+  const l = S.listings.find(x => x.id === id);
+  if (!l) return;
+  modalListingId = id;
+  document.getElementById('modal-titel-hdr').textContent = l.titel.slice(0, 40) + (l.titel.length > 40 ? '…' : '');
+  document.getElementById('modal-titel').textContent = l.titel;
+  document.getElementById('modal-beschr').textContent = l.beschrijving || '';
+  document.getElementById('modal-prijs').value = l.prijs || '';
+  document.getElementById('modal-status').value = l.status || 'actief';
+  // Staat
+  const staatSel = document.getElementById('modal-staat');
+  for (let i = 0; i < staatSel.options.length; i++) {
+    if (staatSel.options[i].value === l.staat) { staatSel.selectedIndex = i; break; }
+  }
+  renderModalUrls(l.links || []);
+  // Gekoppelde mails
+  const mails = S.mails.filter(m => m.listingId === id);
+  const mailsEl = document.getElementById('modal-mails-list');
+  const mailsSect = document.getElementById('modal-mails-sect');
+  if (mails.length) {
+    mailsSect.classList.remove('hidden');
+    mailsEl.innerHTML = mails.map(m => `
+      <div class="mail-item" style="cursor:default">
+        <div class="mmeta"><span class="mbadge">${m.platform||'Mail'}</span><span class="mtime">${m.datum?new Date(m.datum).toLocaleDateString('nl-BE',{day:'2-digit',month:'2-digit'}):''}
+        </span></div>
+        <div style="font-size:13px">${m.subject||''}</div>
+        <div style="font-size:11px;color:var(--mt2)">${m.snippet||''}</div>
+      </div>`).join('');
+  } else {
+    mailsSect.classList.add('hidden');
+  }
+  document.getElementById('listing-modal').classList.remove('hidden');
+  document.getElementById('scroll').style.overflow = 'hidden';
+}
+
+function sluitModal() {
+  document.getElementById('listing-modal').classList.add('hidden');
+  document.getElementById('scroll').style.overflow = '';
+  modalListingId = null;
+}
+
+function renderModalUrls(links) {
+  const el = document.getElementById('modal-urls');
+  if (!links.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--mt);font-style:italic;padding:4px 0">Nog geen links toegevoegd.</div>';
+    return;
+  }
+  el.innerHTML = links.map((lk, i) => `
+    <div class="url-item">
+      <span class="url-platform">${lk.platform}</span>
+      <a href="${lk.url}" target="_blank" class="url-link">${lk.url}</a>
+      <select onchange="wijzigUrlStatus(${i}, this.value)" style="background:var(--s3);border:1px solid var(--b2);border-radius:4px;color:var(--tx);font-size:9px;padding:2px 4px;cursor:pointer;font-family:var(--d);font-weight:700;text-transform:uppercase">
+        <option value="actief" ${(lk.status||'actief')==='actief'?'selected':''}>actief</option>
+        <option value="verkocht" ${lk.status==='verkocht'?'selected':''}>verkocht</option>
+        <option value="inactief" ${lk.status==='inactief'?'selected':''}>inactief</option>
+      </select>
+      <button class="url-del" onclick="verwijderUrl(${i})">×</button>
+    </div>`).join('');
+}
+
+function voegUrlToe() {
+  const l = S.listings.find(x => x.id === modalListingId);
+  if (!l) return;
+  const url = document.getElementById('modal-url-input').value.trim();
+  const platform = document.getElementById('modal-url-platform').value;
+  if (!url || !url.startsWith('http')) { alert('Voer een geldige URL in (begint met http...)'); return; }
+  l.links = l.links || [];
+  l.links.push({ platform, url, status: 'actief', toegevoegd: new Date().toISOString() });
+  document.getElementById('modal-url-input').value = '';
+  renderModalUrls(l.links);
+  saveAll();
+}
+
+function verwijderUrl(idx) {
+  const l = S.listings.find(x => x.id === modalListingId);
+  if (!l) return;
+  l.links.splice(idx, 1);
+  renderModalUrls(l.links);
+  saveAll();
+}
+
+function wijzigUrlStatus(idx, status) {
+  const l = S.listings.find(x => x.id === modalListingId);
+  if (!l || !l.links[idx]) return;
+  l.links[idx].status = status;
+  saveAll();
+}
+
+function slaModalOp() {
+  const l = S.listings.find(x => x.id === modalListingId);
+  if (!l) return;
+  l.titel = document.getElementById('modal-titel').textContent.trim();
+  l.beschrijving = document.getElementById('modal-beschr').textContent.trim();
+  l.prijs = document.getElementById('modal-prijs').value.trim();
+  l.staat = document.getElementById('modal-staat').value;
+  const nieuweStatus = document.getElementById('modal-status').value;
+  if (nieuweStatus === 'verkocht' && l.status !== 'verkocht') {
+    l.verkochtDatum = new Date().toLocaleDateString('nl-BE');
+  }
+  l.status = nieuweStatus;
+  saveAll(); sluitModal(); renderL(); badges();
+}
+
+// ── Inbox mail koppelen aan listing ────────────────────────────────────
+function koppelenAanListing(mailId) {
+  if (!S.listings.length) { alert('Geen listings om aan te koppelen.'); return; }
+  const opties = S.listings.map((l, i) => `${i + 1}. ${l.titel} (${l.prijs})`).join('\n');
+  const keuze = prompt(`Koppel aan welke listing?\n\n${opties}\n\nType het nummer:`);
+  if (!keuze) return;
+  const idx = parseInt(keuze) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= S.listings.length) { alert('Ongeldig nummer.'); return; }
+  const mail = S.mails.find(m => m.id === mailId);
+  if (mail) {
+    mail.listingId = S.listings[idx].id;
+    saveAll();
+    alert(`Gekoppeld aan: ${S.listings[idx].titel}`);
+  }
+}
 
 function badges() {
   const n = S.mails.filter(m => !m.gelezen).length;
