@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Separ8</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><path d='M2 18L18 4L18 18Z' fill='%23c8f04a' opacity='.9'/><path d='M34 18L18 32L18 18Z' fill='%23c8f04a' opacity='.4'/><path d='M18 4L34 18L18 18Z' fill='%23c8f04a' opacity='.65'/><path d='M18 32L2 18L18 18Z' fill='%23c8f04a' opacity='.2'/></svg>">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0a0f;--s1:#13131a;--s2:#1c1c26;--s3:#252532;
+  --b1:rgba(255,255,255,0.08);--b2:rgba(255,255,255,0.14);
+  --acc:#c8f04a;--acc2:#4af0b8;--warn:#f0c44a;--danger:#f04a6a;
+  --tx:#f0f0f8;--mt:#6b6b80;--mt2:#9090a8;
+  --d:'Syne',sans-serif;--f:'Inter',sans-serif;
+}
+body{font-family:var(--f);background:var(--bg);color:var(--tx);font-size:15px;min-height:100vh;overscroll-behavior:none}
+.app{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto}
+
+/* Header */
+.hdr{background:rgba(10,10,15,.96);border-bottom:1px solid var(--b1);padding:10px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+.logo{font-family:var(--d);font-size:20px;font-weight:800;letter-spacing:-.03em}
+.logo span{color:var(--acc)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.api-indicator{font-size:9px;font-family:var(--d);text-transform:uppercase;letter-spacing:.08em;padding:3px 8px;border-radius:4px;cursor:pointer;transition:all .2s}
+.api-indicator.ok{background:rgba(74,240,184,.15);color:var(--acc2);border:1px solid rgba(74,240,184,.3)}
+.api-indicator.nok{background:rgba(240,74,74,.15);color:var(--danger);border:1px solid rgba(240,74,74,.3)}
+
+/* Bottom nav */
+.bnav{background:rgba(13,13,20,.97);border-top:1px solid var(--b1);display:flex;padding:8px 0 max(8px,env(safe-area-inset-bottom));position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:50}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px;border:none;background:none;color:var(--mt);font-family:var(--f);font-size:10px;cursor:pointer;position:relative;transition:color .2s}
+.nb.on{color:var(--acc)}
+.nb svg{width:20px;height:20px}
+.nbadge{position:absolute;top:1px;right:calc(50% - 16px);background:var(--danger);color:#fff;font-size:8px;font-weight:600;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* Scroll */
+.scroll{flex:1;overflow-y:auto;padding:14px 14px 90px;display:flex;flex-direction:column;gap:12px}
+
+/* Cards */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;overflow:hidden}
+.ch{padding:12px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:8px}
+.ct{font-family:var(--d);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mt2)}
+.cb{padding:14px;display:flex;flex-direction:column;gap:13px}
+
+/* Foto upload */
+.drop-zone{border:1.5px dashed var(--b2);border-radius:12px;padding:24px 14px;text-align:center;cursor:pointer;position:relative;background:var(--s2);transition:all .2s}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--acc);background:rgba(200,240,74,.04)}
+.drop-zone input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.dz-icon{font-size:30px;margin-bottom:8px}
+.dz-hint{color:var(--mt2);font-size:13px;line-height:1.5}
+.dz-hint strong{color:var(--acc)}
+.foto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fthumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:1px solid var(--b2)}
+.fthumb img{width:100%;height:100%;object-fit:cover}
+.fdel{position:absolute;top:4px;right:4px;background:rgba(10,10,15,.85);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:var(--danger);font-size:15px;display:flex;align-items:center;justify-content:center;line-height:1}
+.fmain{position:absolute;bottom:4px;left:4px;background:var(--acc);color:#0a0a0f;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;font-family:var(--d);text-transform:uppercase}
+.fadd{aspect-ratio:1;border-radius:8px;border:1.5px dashed var(--b2);background:var(--s2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;color:var(--mt);transition:all .15s;font-size:10px;gap:4px}
+.fadd:hover{border-color:var(--acc);color:var(--acc)}
+.fadd input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+/* Fields */
+.fl{display:flex;flex-direction:column;gap:5px}
+.lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--mt);font-family:var(--d)}
+.inp{background:var(--s2);border:1px solid var(--b2);border-radius:10px;color:var(--tx);padding:11px 12px;font-family:var(--f);font-size:14px;outline:none;width:100%;-webkit-appearance:none;transition:border-color .2s}
+.inp:focus{border-color:var(--acc)}
+.inp::placeholder{color:var(--mt)}
+textarea.inp{resize:none;line-height:1.55}
+select.inp{cursor:pointer}
+select.inp option{background:var(--s2)}
+
+/* Output */
+.out{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px;font-size:13px;line-height:1.65;color:var(--tx);min-height:48px}
+.out[contenteditable]{outline:none}
+.out[contenteditable]:focus{border:1px solid var(--acc)}
+
+/* Chip */
+.chip{display:inline-flex;align-items:center;gap:4px;background:rgba(200,240,74,.1);border:1px solid rgba(200,240,74,.25);border-radius:20px;padding:2px 10px;font-size:10px;font-weight:500;color:var(--acc);letter-spacing:.06em;text-transform:uppercase;font-family:var(--d)}
+.chip::before{content:'◆';font-size:7px}
+
+/* Prijs */
+.price-box{background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px}
+.price-big{font-family:var(--d);font-size:34px;font-weight:800;color:var(--acc)}
+.price-range{font-size:11px;color:var(--mt2);margin-top:2px}
+.price-lbl{font-size:9px;color:var(--mt);text-transform:uppercase;letter-spacing:.1em;font-family:var(--d)}
+
+/* Platforms */
+.plist{display:flex;flex-direction:column;gap:7px}
+.pi{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:10px;cursor:pointer;transition:all .15s}
+.pi:hover{background:var(--s3)}
+.pi.sel{border-color:var(--acc);background:rgba(200,240,74,.06)}
+.pi-name{font-weight:500;font-size:14px}
+.pi-why{font-size:11px;color:var(--mt2);margin-top:1px}
+.pi-sc{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.pi-num{font-family:var(--d);font-size:12px;font-weight:700;color:var(--acc)}
+.pi-track{width:44px;height:3px;background:var(--b2);border-radius:2px;overflow:hidden}
+.pi-fill{height:100%;background:var(--acc);border-radius:2px}
+
+/* Foto feedback */
+.ff-box{background:rgba(200,240,74,.04);border:1px solid rgba(200,240,74,.2);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ff-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--acc);font-family:var(--d)}
+.ff-item{display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.55;color:var(--mt2)}
+
+/* Tags */
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{background:var(--s3);border:1px solid var(--b2);border-radius:5px;padding:4px 9px;font-size:11px;color:var(--mt2)}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:14px 16px;border-radius:10px;border:none;cursor:pointer;font-family:var(--d);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transition:all .15s;width:100%;text-decoration:none}
+.btn:active{transform:scale(.97)}
+.bp{background:var(--acc);color:#0a0a0f}
+.bp:disabled{opacity:.35;cursor:not-allowed}
+.bg{background:transparent;border:1px solid var(--b2);color:var(--mt2)}
+.bg:hover{background:var(--s2)}
+.bs{background:var(--acc2);color:#051a14}
+.bsm{padding:9px 12px;font-size:11px}
+.brow{display:flex;gap:8px}
+.brow .btn{flex:1}
+
+/* Goedkeuring */
+.appr{border:1.5px solid var(--warn);border-radius:10px;background:rgba(240,196,74,.06);padding:12px;display:flex;flex-direction:column;gap:9px}
+.appr-lbl{font-size:10px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:.1em;font-family:var(--d)}
+
+/* Copy */
+.crow{display:flex;align-items:center;justify-content:space-between}
+.cbtn{display:flex;align-items:center;gap:3px;background:none;border:1px solid var(--b2);border-radius:5px;padding:4px 9px;font-size:10px;color:var(--mt2);cursor:pointer;font-family:var(--f);transition:all .15s}
+.cbtn:hover{border-color:var(--acc2);color:var(--acc2)}
+
+/* Succes */
+.suc{text-align:center;padding:28px 14px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.sic{font-size:48px}
+.sti{font-family:var(--d);font-size:22px;font-weight:800;color:var(--acc)}
+
+/* Inbox sync */
+.inbox-hdr{padding:14px;display:flex;flex-direction:column;gap:10px}
+.sync-bar{display:flex;align-items:center;gap:10px}
+.sync-btn{display:flex;align-items:center;gap:7px;background:var(--acc);color:#0a0a0f;border:none;border-radius:10px;padding:11px 18px;font-family:var(--d);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;flex-shrink:0}
+.sync-btn:hover{background:#b8e030}
+.sync-btn:active{transform:scale(.97)}
+.sync-btn:disabled{opacity:.4;cursor:not-allowed}
+.sync-btn svg{flex-shrink:0}
+.sync-btn.spin svg{animation:sp .7s linear infinite}
+.sync-info{display:flex;flex-direction:column;gap:2px;flex:1}
+.sync-lbl{font-family:var(--d);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mt2)}
+.sync-time{font-size:11px;color:var(--mt)}
+.sync-result{display:flex;align-items:center;gap:6px;font-size:12px;padding:8px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--b1)}
+.sr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sr-dot.ok{background:var(--acc2)}
+.sr-dot.warn{background:var(--warn)}
+.sr-dot.err{background:var(--danger)}
+
+/* Mail items */
+.mail-item{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:5px;border-left:3px solid transparent}
+.mail-item.unread{border-left-color:var(--acc)}
+.mail-item:hover{background:var(--s3)}
+.mbadge{display:inline-flex;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-family:var(--d);background:rgba(200,240,74,.12);color:var(--acc)}
+.mmeta{display:flex;align-items:center;gap:7px}
+.mtime{font-size:10px;color:var(--mt);margin-left:auto}
+.msec-title{font-family:var(--d);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mt);padding:4px 0 2px}
+
+/* Listings */
+.lcard{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:7px}
+.sc{padding:2px 8px;border-radius:4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-family:var(--d)}
+.sc.act{background:rgba(200,240,74,.15);color:var(--acc)}
+.sc.verk{background:rgba(74,240,184,.15);color:var(--acc2)}
+
+/* Setup */
+.ss{display:flex;gap:10px;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px}
+.ss-n{width:24px;height:24px;border-radius:50%;background:var(--acc);color:#0a0a0f;font-family:var(--d);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ss-t{font-size:12px;color:var(--mt2);line-height:1.6}
+.ss-t strong{color:var(--tx)}
+.vcard{background:rgba(74,240,184,.05);border:1.5px solid rgba(74,240,184,.2);border-radius:10px;padding:12px}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:rgba(10,10,15,.93);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.lo-ring{width:56px;height:56px;border:3px solid var(--b2);border-top-color:var(--acc);border-radius:50%;animation:sp .8s linear infinite}
+.lo-title{font-family:var(--d);font-size:18px;font-weight:800;color:var(--acc)}
+.lo-sub{font-size:12px;color:var(--mt2);text-align:center;max-width:260px;line-height:1.6}
+@keyframes sp{to{transform:rotate(360deg)}}
+.spin-sm{width:16px;height:16px;border:2px solid var(--b2);border-top-color:var(--acc);border-radius:50%;animation:sp .65s linear infinite;display:inline-block;flex-shrink:0}
+
+/* API Key overlay */
+.api-overlay{position:fixed;inset:0;background:rgba(10,10,15,.98);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px}
+.api-card{background:var(--s1);border:1px solid var(--b2);border-radius:20px;padding:28px;max-width:400px;width:100%;display:flex;flex-direction:column;gap:16px}
+.api-title{font-family:var(--d);font-size:22px;font-weight:800}
+.api-sub{font-size:13px;color:var(--mt2);line-height:1.7}
+.api-link{color:var(--acc);text-decoration:none}
+.api-link:hover{text-decoration:underline}
+
+.hidden{display:none!important}
+.mt{color:var(--mt2);font-size:12px}
+.empty{text-align:center;padding:36px 16px;color:var(--mt2);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:10px}
+</style>
+</head>
+<body>
+
+<!-- API Key overlay -->
+<div class="api-overlay" id="api-overlay">
+  <div class="api-card">
+    <svg width="40" height="40" viewBox="0 0 36 36" fill="none">
+      <path d="M2 18L18 4L18 18Z" fill="#c8f04a" opacity=".9"/>
+      <path d="M34 18L18 32L18 18Z" fill="#c8f04a" opacity=".4"/>
+      <path d="M18 4L34 18L18 18Z" fill="#c8f04a" opacity=".65"/>
+      <path d="M18 32L2 18L18 18Z" fill="#c8f04a" opacity=".2"/>
+      <line x1="18" y1="4" x2="18" y2="32" stroke="#0a0a0f" stroke-width="1.5"/>
+      <circle cx="18" cy="18" r="4.5" fill="#0a0a0f"/>
+      <circle cx="18" cy="15.5" r="2" fill="none" stroke="#c8f04a" stroke-width="1.2"/>
+      <circle cx="18" cy="20.5" r="2.5" fill="none" stroke="#c8f04a" stroke-width="1.2"/>
+    </svg>
+    <div class="api-title">Welkom bij Separ<span style="color:var(--acc)">8</span></div>
+    <div class="api-sub">
+      Voer je Anthropic API-sleutel in om te starten. Deze wordt lokaal opgeslagen in je browser en nergens naartoe gestuurd.<br><br>
+      Haal je sleutel op via <a class="api-link" href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a>
+    </div>
+    <div class="fl">
+      <div class="lbl">API Sleutel</div>
+      <input class="inp" type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off">
+    </div>
+    <div id="api-error" class="hidden" style="color:var(--danger);font-size:12px"></div>
+    <button class="btn bp" onclick="saveApiKey()">Opslaan & starten</button>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay hidden" id="loading">
+  <div class="lo-ring"></div>
+  <div class="lo-title">Analyseren...</div>
+  <div class="lo-sub" id="lo-sub">Foto's worden geanalyseerd</div>
+</div>
+
+<div class="app">
+  <header class="hdr">
+    <svg width="32" height="32" viewBox="0 0 36 36" fill="none">
+      <path d="M2 18L18 4L18 18Z" fill="#c8f04a" opacity=".9"/>
+      <path d="M34 18L18 32L18 18Z" fill="#c8f04a" opacity=".4"/>
+      <path d="M18 4L34 18L18 18Z" fill="#c8f04a" opacity=".65"/>
+      <path d="M18 32L2 18L18 18Z" fill="#c8f04a" opacity=".2"/>
+      <line x1="18" y1="4" x2="18" y2="32" stroke="#0a0a0f" stroke-width="1.5"/>
+      <circle cx="18" cy="18" r="4.5" fill="#0a0a0f"/>
+      <circle cx="18" cy="15.5" r="2" fill="none" stroke="#c8f04a" stroke-width="1.2"/>
+      <circle cx="18" cy="20.5" r="2.5" fill="none" stroke="#c8f04a" stroke-width="1.2"/>
+    </svg>
+    <div class="logo">Separ<span>8</span></div>
+    <div style="font-family:var(--d);font-size:9px;font-weight:700;color:var(--mt);letter-spacing:.08em;margin-top:2px">v1.3</div>
+    <div class="hdr-right">
+      <div class="api-indicator nok" id="api-ind" onclick="resetApiKey()" title="Klik om API-sleutel te wijzigen">API ●</div>
+    </div>
+  </header>
+
+  <div class="scroll" id="scroll">
+
+    <!-- ── TAB NIEUW ── -->
+    <div id="tab-nieuw">
+      <div id="fase-upload">
+        <div class="card">
+          <div class="ch">
+            <div class="ct">Foto's</div>
+            <span id="foto-teller" style="font-size:11px;color:var(--mt2);margin-left:4px"></span>
+          </div>
+          <div class="cb">
+            <div id="drop-zone" class="drop-zone"
+                 ondrop="dropF(event)"
+                 ondragover="event.preventDefault();this.classList.add('drag')"
+                 ondragleave="this.classList.remove('drag')">
+              <input type="file" accept="image/*" multiple id="fi-main" onchange="addF(event)">
+              <div class="dz-icon">📷</div>
+              <div class="dz-hint">
+                <strong>Tik voor foto's</strong> of sleep hierheen<br>
+                <span style="font-size:11px;display:block;margin-top:3px;color:var(--mt)">Meerdere tegelijk · iPhone foto's rechtstreeks</span>
+              </div>
+            </div>
+            <div id="foto-grid" class="foto-grid hidden"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><div class="ct">Extra info voor AI</div></div>
+          <div class="cb">
+            <textarea class="inp" id="ctx" rows="5"
+              placeholder="Geef zoveel mogelijk context:&#10;• Merk, model, jaar, kleur&#10;• Staat — defecten, slijtage&#10;• Wat is inbegrepen (accessoires, doos...)&#10;• Originele aankoopprijs&#10;• Reden van verkoop"></textarea>
+            <button class="btn bp" id="btn-analyse" onclick="doAlles()" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              Analyseer nu
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="fase-resultaat" class="hidden">
+        <div class="card" id="card-ff">
+          <div class="ch"><div class="ct">Foto-feedback</div></div>
+          <div class="cb"><div class="ff-box" id="ff-items"></div></div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><div class="ct">Zoekertje</div><div class="chip" style="margin-left:auto">AI-gegenereerd</div></div>
+          <div class="cb">
+            <div class="fl">
+              <div class="crow"><div class="lbl">Titel</div><button class="cbtn" onclick="cf('tout')">⎘ Kopieer</button></div>
+              <div class="out" id="tout" contenteditable="true"></div>
+            </div>
+            <div class="fl">
+              <div class="crow"><div class="lbl">Beschrijving</div><button class="cbtn" onclick="cf('bout')">⎘ Kopieer</button></div>
+              <div class="out" id="bout" contenteditable="true" style="min-height:110px"></div>
+            </div>
+            <div class="brow">
+              <div class="fl" style="flex:1">
+                <div class="lbl">Prijs</div>
+                <input class="inp" type="text" id="lprijs">
+              </div>
+              <div class="fl" style="flex:1">
+                <div class="lbl">Staat</div>
+                <select class="inp" id="lstaat">
+                  <option>Goede staat</option>
+                  <option>Zeer goede staat</option>
+                  <option>Als nieuw</option>
+                  <option>Nieuw met label</option>
+                  <option>Lichte gebruikssporen</option>
+                </select>
+              </div>
+            </div>
+            <div class="fl"><div class="lbl">Tags</div><div class="tags" id="tags"></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><div class="ct">Prijsvoorstel</div></div>
+          <div class="cb">
+            <div class="price-box">
+              <div>
+                <div class="price-lbl">Aanbevolen</div>
+                <div class="price-big" id="pmain">€—</div>
+                <div class="price-range" id="prange"></div>
+              </div>
+              <div style="flex:1">
+                <div class="fl">
+                  <div class="lbl">Aanpassen</div>
+                  <input class="inp" type="number" id="pinp"
+                    style="font-size:17px;font-family:var(--d);font-weight:700"
+                    onchange="document.getElementById('lprijs').value='€'+this.value">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><div class="ct">Platform advies</div></div>
+          <div class="cb"><div class="plist" id="plist"></div></div>
+        </div>
+
+        <div class="appr">
+          <div class="appr-lbl">⚠ Jouw goedkeuring</div>
+          <div class="mt">Pas aan waar nodig. Dan staat alles in je klembord.</div>
+          <button class="btn bs" onclick="goedkeuren()">✓ Goedkeuren & kopieer</button>
+          <div class="brow">
+            <button class="btn bg bsm" onclick="heranalyseer()">↺ Opnieuw analyseren</button>
+            <button class="btn bg bsm" onclick="nieuwItem()">+ Nieuw item</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="fase-klaar" class="hidden">
+        <div class="card">
+          <div class="cb">
+            <div class="suc">
+              <div class="sic">✅</div>
+              <div class="sti">Tekst gekopieerd!</div>
+              <div class="mt" style="line-height:1.6">Plak nu in het platform naar keuze.</div>
+              <div style="display:flex;flex-direction:column;gap:7px;width:100%;margin-top:8px">
+                <a href="https://www.vinted.be/sell" target="_blank" class="btn bg">↗ Vinted</a>
+                <a href="https://www.2dehands.be/plaatsen" target="_blank" class="btn bg">↗ 2dehands.be</a>
+                <a href="https://www.ebay.be/sell" target="_blank" class="btn bg">↗ eBay</a>
+                <button class="btn bp" onclick="nieuwItem()">+ Nieuw item</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB INBOX ── -->
+    <div id="tab-inbox" class="hidden">
+      <div class="card">
+        <div class="inbox-hdr">
+          <div class="sync-bar">
+            <div class="sync-info">
+              <div class="sync-lbl">Gmail · separ8</div>
+              <div class="sync-time" id="sync-time">Nog niet gesynchroniseerd</div>
+            </div>
+            <button class="sync-btn" id="sync-btn" onclick="syncGmail()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Synchroniseer
+            </button>
+          </div>
+          <div id="sync-result" class="sync-result hidden">
+            <div class="sr-dot ok" id="sr-dot"></div>
+            <span id="sr-text" style="color:var(--mt2);font-size:12px"></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="sect-nieuw" class="hidden">
+        <div class="msec-title">Nieuw</div>
+        <div id="list-nieuw" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <div id="sect-verwerkt" class="hidden">
+        <div class="msec-title">Verwerkt</div>
+        <div id="list-verwerkt" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <div id="inbox-empty">
+        <div class="card">
+          <div class="cb">
+            <div class="empty">
+              <div style="font-size:32px">📬</div>
+              <div>Klik op <strong style="color:var(--acc)">Synchroniseer</strong> om je Gmail-inbox te checken.</div>
+              <div style="font-size:11px;color:var(--mt)">Separ8 leest het label "separ8" via de Anthropic API.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="antw-card" class="card hidden">
+        <div class="ch">
+          <div class="ct">Antwoord</div>
+          <div id="antw-sp" class="spin-sm hidden" style="margin-left:auto"></div>
+        </div>
+        <div class="cb">
+          <div class="fl">
+            <div class="lbl">Bericht koper</div>
+            <div class="out" id="kmsg" style="min-height:50px;font-size:13px"></div>
+          </div>
+          <div class="chip">Communicatie-agent</div>
+          <div class="fl">
+            <div class="crow">
+              <div class="lbl">Voorgesteld antwoord</div>
+              <button class="cbtn" onclick="cf('aout')">⎘ Kopieer</button>
+            </div>
+            <div class="out" id="aout" contenteditable="true" style="min-height:80px"></div>
+          </div>
+          <div class="appr">
+            <div class="appr-lbl">⚠ Goedkeuring</div>
+            <button class="btn bs" onclick="goedkA()">✓ Goedkeuren & kopieer</button>
+            <div class="brow">
+              <button class="btn bg bsm" onclick="hergenA()">↺ Hergenereren</button>
+              <button class="btn bg bsm" onclick="sluitA()">✕ Sluiten</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB LISTINGS ── -->
+    <div id="tab-listings" class="hidden">
+      <div class="card">
+        <div class="ch"><div class="ct">Mijn listings</div></div>
+        <div class="cb" id="lb">
+          <div class="empty"><div style="font-size:28px">📋</div>Nog geen listings.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB VERKOPEN ── -->
+    <div id="tab-verkopen" class="hidden">
+      <div class="card">
+        <div class="ch"><div class="ct">Afgerond</div></div>
+        <div class="cb" id="vb">
+          <div class="empty"><div style="font-size:28px">📦</div>Nog geen verkopen.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB SETUP ── -->
+    <div id="tab-setup" class="hidden">
+      <div class="card">
+        <div class="ch"><div class="ct">Gmail setup</div></div>
+        <div class="cb">
+          <div class="mt" style="line-height:1.7">
+            Separ8 gebruikt de Anthropic API met je Gmail connector om het label
+            <strong style="color:var(--tx)">separ8</strong> te lezen.
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div class="ss">
+              <div class="ss-n">1</div>
+              <div class="ss-t">
+                <strong>Gmail filter aanmaken (eenmalig)</strong><br>
+                Van: <strong>vinted.be OR 2dehands.be OR facebookmail.com OR ebay.be</strong><br>
+                → Label toepassen: <strong>separ8</strong>
+              </div>
+            </div>
+            <div class="ss">
+              <div class="ss-n">2</div>
+              <div class="ss-t">
+                <strong>Gmail ID instellen</strong><br>
+                Vul hieronder je Gmail-label ID in (zie je inbox instellingen).
+                Standaard werkt <strong>separ8</strong> als zoekopdracht.
+              </div>
+            </div>
+            <div class="ss">
+              <div class="ss-n">3</div>
+              <div class="ss-t">
+                <strong>Synchroniseer</strong><br>
+                Tab Inbox → klik Synchroniseer → berichten verschijnen automatisch.
+              </div>
+            </div>
+          </div>
+          <div class="fl">
+            <div class="lbl">Gmail label naam</div>
+            <input class="inp" type="text" id="gmail-label" value="separ8" placeholder="separ8">
+          </div>
+          <button class="btn bp" onclick="saveSetup()">✓ Opslaan</button>
+          <div id="setup-ok" class="hidden" style="color:var(--acc2);font-size:12px;text-align:center;padding:4px 0">✓ Opgeslagen!</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><div class="ct">Verzending</div></div>
+        <div class="cb">
+          <div class="fl">
+            <div class="lbl">Voorkeur vervoerder</div>
+            <select class="inp" id="vervoerder">
+              <option>Bpost</option><option>DPD</option><option>PostNL</option><option>DHL</option>
+            </select>
+          </div>
+          <div class="fl">
+            <div class="lbl">Afzenderadres</div>
+            <textarea class="inp" id="adres" rows="3" placeholder="Naam&#10;Straat nr&#10;Postcode Gemeente"></textarea>
+          </div>
+          <button class="btn bp" onclick="saveVerzending()">✓ Opslaan</button>
+          <div id="v-ok" class="hidden" style="color:var(--acc2);font-size:12px;text-align:center;padding:4px 0">✓ Opgeslagen!</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><div class="ct">API Sleutel</div></div>
+        <div class="cb">
+          <div class="mt" style="line-height:1.7">Je API-sleutel is opgeslagen in je browser. Klik hieronder om hem te wijzigen.</div>
+          <button class="btn bg" onclick="resetApiKey()">🔑 API-sleutel wijzigen</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end scroll -->
+
+  <nav class="bnav">
+    <button class="nb on" id="nav-nieuw" onclick="st('nieuw')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Nieuw
+    </button>
+    <button class="nb" id="nav-inbox" onclick="st('inbox')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Inbox
+      <div class="nbadge hidden" id="ibadge">0</div>
+    </button>
+    <button class="nb" id="nav-listings" onclick="st('listings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      Listings
+    </button>
+    <button class="nb" id="nav-verkopen" onclick="st('verkopen')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Verkopen
+    </button>
+    <button class="nb" id="nav-setup" onclick="st('setup')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l-.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Instell.
+    </button>
+  </nav>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let API_KEY = '';
+let S = {
+  fotos: [], analyse: null,
+  listings: [], mails: [], currentMail: null,
+  lastSync: null,
+  gmailLabel: 'separ8',
+  verzending: { vervoerder: 'Bpost', adres: '' }
+};
+
+// ── Persistentie (localStorage) ────────────────────────────────────────
+function loadAll() {
+  API_KEY = localStorage.getItem('s8-apikey') || '';
+  // Vul API key input in als die al bestaat (zodat wijzigen makkelijk is)
+  if (API_KEY) document.getElementById('api-key-input').value = '••••••••••••••••';
+  try {
+    const d = JSON.parse(localStorage.getItem('s8-state') || '{}');
+    S.listings = d.listings || [];
+    S.mails = d.mails || [];
+    S.verzending = d.verzending || S.verzending;
+    S.lastSync = d.lastSync || null;
+    S.gmailLabel = d.gmailLabel || 'separ8';
+  } catch(e) {}
+
+  if (API_KEY) {
+    document.getElementById('api-overlay').classList.add('hidden');
+    document.getElementById('api-ind').className = 'api-indicator ok';
+    document.getElementById('api-ind').textContent = 'API ●';
+  }
+  if (S.lastSync) {
+    document.getElementById('sync-time').textContent =
+      'Laatste sync: ' + new Date(S.lastSync).toLocaleTimeString('nl-BE', {hour:'2-digit',minute:'2-digit'});
+  }
+  if (S.verzending.adres) document.getElementById('adres').value = S.verzending.adres;
+  document.getElementById('vervoerder').value = S.verzending.vervoerder;
+  document.getElementById('gmail-label').value = S.gmailLabel;
+  if (S.mails.length) renderInbox();
+  badges();
+}
+
+function saveAll() {
+  try {
+    localStorage.setItem('s8-state', JSON.stringify({
+      listings: S.listings,
+      mails: S.mails.slice(0, 100),
+      verzending: S.verzending,
+      lastSync: S.lastSync,
+      gmailLabel: S.gmailLabel
+    }));
+  } catch(e) {}
+}
+
+// ── API Key ────────────────────────────────────────────────────────────
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key.startsWith('sk-ant-') && !key.startsWith('sk-')) {
+    document.getElementById('api-error').textContent = 'Ongeldige sleutel. Moet beginnen met sk-ant-';
+    document.getElementById('api-error').classList.remove('hidden');
+    return;
+  }
+  API_KEY = key;
+  localStorage.setItem('s8-apikey', key);
+  document.getElementById('api-overlay').classList.add('hidden');
+  document.getElementById('api-ind').className = 'api-indicator ok';
+  document.getElementById('api-ind').textContent = 'API ●';
+}
+
+function resetApiKey() {
+  if (confirm('API-sleutel verwijderen en opnieuw instellen?')) {
+    localStorage.removeItem('s8-apikey');
+    API_KEY = '';
+    document.getElementById('api-key-input').value = '';
+    document.getElementById('api-error').classList.add('hidden');
+    document.getElementById('api-overlay').classList.remove('hidden');
+    document.getElementById('api-ind').className = 'api-indicator nok';
+  }
+}
+
+// ── Anthropic API call ─────────────────────────────────────────────────
+async function claude(messages, max_tokens = 1500) {
+  const res = await fetch('/.netlify/functions/claude', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens,
+      messages
+    })
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`HTTP ${res.status}: ${txt.slice(0, 200)}`);
+  }
+  const text = await res.text();
+  if (!text || text.trim() === '') throw new Error('Lege response van server. Probeer opnieuw.');
+  let data;
+  try { data = JSON.parse(text); } catch(e) { throw new Error('Ongeldige response: ' + text.slice(0, 100)); }
+  if (data.error) throw new Error(data.error.message);
+  return data.content?.find(b => b.type === 'text')?.text || '';
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────
+const TABS = ['nieuw', 'inbox', 'listings', 'verkopen', 'setup'];
+function st(t) {
+  TABS.forEach(x => {
+    document.getElementById('tab-' + x).classList.add('hidden');
+    document.getElementById('nav-' + x).classList.remove('on');
+  });
+  document.getElementById('tab-' + t).classList.remove('hidden');
+  document.getElementById('nav-' + t).classList.add('on');
+  document.getElementById('scroll').scrollTop = 0;
+  if (t === 'listings') renderL();
+  if (t === 'verkopen') renderVerk();
+}
+
+// ── Foto beheer ────────────────────────────────────────────────────────
+function readF(file) {
+  return new Promise(res => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      // Verkleinen naar max 1200px, max 800KB
+      const MAX = 1200;
+      const MAX_BYTES = 800 * 1024;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      // Verlaag kwaliteit tot onder MAX_BYTES
+      let quality = 0.85;
+      let dataUrl = canvas.toDataURL('image/jpeg', quality);
+      while (dataUrl.length * 0.75 > MAX_BYTES && quality > 0.3) {
+        quality -= 0.1;
+        dataUrl = canvas.toDataURL('image/jpeg', quality);
+      }
+      res({
+        base64: dataUrl.split(',')[1],
+        mime: 'image/jpeg',
+        preview: dataUrl,
+        origSize: file.size,
+        newSize: Math.round(dataUrl.length * 0.75)
+      });
+    };
+    img.src = url;
+  });
+}
+
+async function addF(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  for (const f of files) {
+    const d = await readF(f);
+    S.fotos.push(d);
+  }
+  e.target.value = '';
+  renderGrid();
+}
+
+function dropF(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  Promise.all(files.map(readF)).then(ds => { S.fotos.push(...ds); renderGrid(); });
+}
+
+function delF(i) { S.fotos.splice(i, 1); renderGrid(); }
+
+function renderGrid() {
+  const n = S.fotos.length;
+  document.getElementById('foto-teller').textContent = n ? `(${n} foto${n > 1 ? 's' : ''})` : '';
+  const dz = document.getElementById('drop-zone');
+  const grid = document.getElementById('foto-grid');
+  document.getElementById('btn-analyse').disabled = n === 0;
+  if (n === 0) { dz.classList.remove('hidden'); grid.classList.add('hidden'); return; }
+  dz.classList.add('hidden');
+  grid.classList.remove('hidden');
+  grid.innerHTML = '';
+  S.fotos.forEach((f, i) => {
+    const d = document.createElement('div');
+    d.className = 'fthumb';
+    d.innerHTML = `<img src="${f.preview}" alt="">
+      ${i === 0 ? '<div class="fmain">Hoofd</div>' : ''}
+      <button class="fdel" onclick="delF(${i})">×</button>`;
+    grid.appendChild(d);
+  });
+  const add = document.createElement('div');
+  add.className = 'fadd';
+  add.innerHTML = `<input type="file" accept="image/*" multiple onchange="addF(event)">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span>Meer</span>`;
+  grid.appendChild(add);
+}
+
+// ── Analyse + listing in één call ──────────────────────────────────────
+async function doAlles() {
+  if (!S.fotos.length) return;
+  if (!API_KEY) { alert('Voer eerst een API-sleutel in.'); return; }
+
+  const loading = document.getElementById('loading');
+  loading.classList.remove('hidden');
+  const totaalKB = Math.round(S.fotos.reduce((a, f) => a + (f.newSize || 0), 0) / 1024);
+  document.getElementById('lo-sub').textContent = `${S.fotos.length} foto${S.fotos.length > 1 ? 's' : ''} analyseren... (${totaalKB} KB)`;
+
+  const ctx = document.getElementById('ctx').value.trim();
+  const content = [];
+  S.fotos.forEach((f, i) => {
+    content.push({ type: 'text', text: `Foto ${i + 1} van ${S.fotos.length}:` });
+    content.push({ type: 'image', source: { type: 'base64', media_type: f.mime, data: f.base64 } });
+  });
+
+  document.getElementById('lo-sub').textContent = 'AI analyseert, schrijft tekst en bepaalt prijs...';
+
+  const prompt = `Tweedehands verkoop-expert België. ${S.fotos.length} foto('s) van HETZELFDE artikel. Analyseer alles samen als één item.
+${ctx ? 'Extra info eigenaar: ' + ctx + '\n' : ''}
+Geef één JSON response:
+{
+  "item": "naam item",
+  "samenvatting": "2-3 zinnen analyse",
+  "staat": "Goede staat",
+  "prijs_min": 10,
+  "prijs_max": 50,
+  "prijs_aanbevolen": 30,
+  "platforms": [
+    {"naam":"Vinted","score":85,"reden":"1 zin"},
+    {"naam":"2dehands.be","score":72,"reden":"1 zin"},
+    {"naam":"eBay","score":68,"reden":"1 zin"},
+    {"naam":"Facebook Marketplace","score":55,"reden":"1 zin"}
+  ],
+  "titel": "max 60 tekens, pakkend en specifiek",
+  "beschrijving": "4-6 zinnen NL: item, staat, wat inbegrepen, call-to-action",
+  "tags": ["t1","t2","t3","t4","t5","t6"],
+  "foto_feedback": [
+    {"type":"goed","tekst":"wat werkt goed"},
+    {"type":"tip","tekst":"concrete verbeteringstip"},
+    {"type":"ontbreekt","tekst":"welke foto nog nuttig zou zijn"}
+  ]
+}
+Platforms: Vinted=kleding/mode, eBay=elektronica/verzamelobjecten/int., 2dehands=lokaal breed, Facebook=groot/zwaar.
+foto_feedback: type goed/tip/ontbreekt, 2-5 items, eerlijk en concreet.
+ALLEEN JSON.`;
+
+  content.push({ type: 'text', text: prompt });
+
+  try {
+    const raw = await claude([{ role: 'user', content }], 1800);
+    const p = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    S.analyse = p;
+    loading.classList.add('hidden');
+    toonResultaat(p);
+  } catch(e) {
+    loading.classList.add('hidden');
+    alert('Analyse mislukt: ' + e.message);
+  }
+}
+
+function toonResultaat(p) {
+  const icons = { goed: '✓', tip: '→', ontbreekt: '+' };
+  const style = { goed: 'color:var(--acc2)', tip: 'color:var(--warn)', ontbreekt: 'color:var(--danger)' };
+  const ffEl = document.getElementById('ff-items');
+  if (p.foto_feedback && p.foto_feedback.length) {
+    ffEl.innerHTML = '<div class="ff-lbl">Foto-feedback</div>' +
+      p.foto_feedback.map(f =>
+        `<div class="ff-item"><span style="${style[f.type]||''};flex-shrink:0;font-weight:700;margin-top:1px">${icons[f.type] || '•'}</span><span>${f.tekst}</span></div>`
+      ).join('');
+    document.getElementById('card-ff').classList.remove('hidden');
+  } else {
+    document.getElementById('card-ff').classList.add('hidden');
+  }
+
+  document.getElementById('tout').textContent = p.titel || '';
+  document.getElementById('bout').textContent = p.beschrijving || '';
+  document.getElementById('lprijs').value = '€' + (p.prijs_aanbevolen || '');
+  document.getElementById('lstaat').value = p.staat || 'Goede staat';
+
+  const tg = document.getElementById('tags'); tg.innerHTML = '';
+  (p.tags || []).forEach(t => {
+    const s = document.createElement('span'); s.className = 'tag'; s.textContent = t; tg.appendChild(s);
+  });
+
+  document.getElementById('pmain').textContent = '€' + (p.prijs_aanbevolen || '—');
+  document.getElementById('prange').textContent = 'Marge: €' + (p.prijs_min || '?') + ' – €' + (p.prijs_max || '?');
+  document.getElementById('pinp').value = p.prijs_aanbevolen || '';
+
+  const pl = document.getElementById('plist'); pl.innerHTML = '';
+  [...(p.platforms || [])].sort((a, b) => b.score - a.score).forEach((p2, i) => {
+    const el = document.createElement('div');
+    el.className = 'pi' + (i === 0 ? ' sel' : '');
+    el.dataset.p = p2.naam;
+    el.innerHTML = `<div><div class="pi-name">${p2.naam}</div><div class="pi-why">${p2.reden}</div></div>
+      <div class="pi-sc"><div class="pi-num">${p2.score}%</div>
+      <div class="pi-track"><div class="pi-fill" style="width:${p2.score}%"></div></div></div>`;
+    el.onclick = () => { document.querySelectorAll('.pi').forEach(x => x.classList.remove('sel')); el.classList.add('sel'); };
+    pl.appendChild(el);
+  });
+
+  document.getElementById('fase-upload').classList.add('hidden');
+  document.getElementById('fase-resultaat').classList.remove('hidden');
+  document.getElementById('fase-klaar').classList.add('hidden');
+  document.getElementById('scroll').scrollTop = 0;
+}
+
+function goedkeuren() {
+  const t = document.getElementById('tout').textContent;
+  const b = document.getElementById('bout').textContent;
+  const pr = document.getElementById('lprijs').value;
+  const staat = document.getElementById('lstaat').value;
+  const pl = document.querySelector('.pi.sel')?.dataset.p || '';
+  navigator.clipboard.writeText(`${t}\n\n${b}\n\nPrijs: ${pr}\nStaat: ${staat}`).catch(() => {});
+  S.listings.unshift({
+    id: Date.now(), titel: t, beschrijving: b, prijs: pr, staat, platform: pl,
+    datum: new Date().toLocaleDateString('nl-BE'), status: 'actief', aantalFotos: S.fotos.length
+  });
+  badges(); saveAll();
+  document.getElementById('fase-upload').classList.add('hidden');
+  document.getElementById('fase-resultaat').classList.add('hidden');
+  document.getElementById('fase-klaar').classList.remove('hidden');
+  document.getElementById('scroll').scrollTop = 0;
+}
+
+function heranalyseer() {
+  document.getElementById('fase-resultaat').classList.add('hidden');
+  document.getElementById('fase-upload').classList.remove('hidden');
+}
+
+function nieuwItem() {
+  S.fotos = []; S.analyse = null; renderGrid();
+  document.getElementById('fase-resultaat').classList.add('hidden');
+  document.getElementById('fase-klaar').classList.add('hidden');
+  document.getElementById('fase-upload').classList.remove('hidden');
+  document.getElementById('drop-zone').classList.remove('hidden');
+  document.getElementById('ctx').value = '';
+  document.getElementById('scroll').scrollTop = 0;
+}
+
+// ── Gmail sync ─────────────────────────────────────────────────────────
+async function syncGmail() {
+  if (!API_KEY) { alert('Voer eerst een API-sleutel in via Instellingen.'); return; }
+
+  const btn = document.getElementById('sync-btn');
+  btn.disabled = true;
+  btn.classList.add('spin');
+  document.getElementById('sync-time').textContent = 'Synchroniseren...';
+  setSyncResult(null);
+
+  const label = document.getElementById('gmail-label').value.trim() || 'separ8';
+
+  try {
+    const raw = await claude([{
+      role: 'user',
+      content: `Gebruik de Gmail MCP connector om alle email threads op te halen met het label "${label}".
+
+Geef ALLEEN een geldige JSON array terug met de echte berichten die je vindt. Als er geen berichten zijn, geef [].
+Geen uitleg, geen markdown, alleen de JSON array.
+
+Formaat per bericht:
+[{
+  "id": "uniek thread id",
+  "platform": "Vinted" of "2dehands.be" of "eBay" of "Facebook Marketplace" of "Onbekend",
+  "subject": "onderwerp",
+  "snippet": "eerste 120 tekens berichttekst",
+  "volledig": "volledige berichttekst van koper zonder signature/footer/citaten",
+  "afzender": "email adres",
+  "datum": "ISO8601 datum"
+}]`
+    }], 2000);
+
+    let mails = [];
+    try {
+      const cleaned = raw.replace(/```json|```/g, '').trim();
+      mails = JSON.parse(cleaned);
+      if (!Array.isArray(mails)) mails = [];
+    } catch(e) { mails = []; }
+
+    // Bewaar gelezen-status
+    const oudeGelezen = new Map(S.mails.map(m => [m.id, m.gelezen]));
+    const nieuwAantal = mails.filter(m => !oudeGelezen.has(m.id)).length;
+    S.mails = mails.map(m => ({ ...m, gelezen: oudeGelezen.has(m.id) ? oudeGelezen.get(m.id) : false }));
+    S.lastSync = new Date().toISOString();
+    saveAll(); badges();
+
+    const nu = new Date().toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('sync-time').textContent = 'Laatste sync: ' + nu;
+
+    if (mails.length === 0) {
+      setSyncResult('warn', 'Geen berichten gevonden in label "' + label + '"');
+      document.getElementById('inbox-empty').classList.remove('hidden');
+      document.getElementById('sect-nieuw').classList.add('hidden');
+      document.getElementById('sect-verwerkt').classList.add('hidden');
+    } else {
+      setSyncResult('ok', `${mails.length} bericht${mails.length > 1 ? 'en' : ''} · ${nieuwAantal} nieuw`);
+      renderInbox();
+    }
+  } catch(e) {
+    setSyncResult('err', 'Sync mislukt: ' + e.message);
+    document.getElementById('sync-time').textContent = 'Sync mislukt';
+  }
+
+  btn.disabled = false;
+  btn.classList.remove('spin');
+}
+
+function setSyncResult(type, text) {
+  const box = document.getElementById('sync-result');
+  if (!type) { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  document.getElementById('sr-dot').className = 'sr-dot ' + type;
+  document.getElementById('sr-text').textContent = text;
+}
+
+function renderInbox() {
+  const nieuw = S.mails.filter(m => !m.gelezen);
+  const verwerkt = S.mails.filter(m => m.gelezen);
+  document.getElementById('inbox-empty').classList.add('hidden');
+
+  const sectN = document.getElementById('sect-nieuw');
+  if (nieuw.length > 0) {
+    sectN.classList.remove('hidden');
+    document.getElementById('list-nieuw').innerHTML = '';
+    nieuw.forEach(m => document.getElementById('list-nieuw').appendChild(mailEl(m)));
+  } else {
+    sectN.classList.add('hidden');
+  }
+
+  const sectV = document.getElementById('sect-verwerkt');
+  if (verwerkt.length > 0) {
+    sectV.classList.remove('hidden');
+    document.getElementById('list-verwerkt').innerHTML = '';
+    verwerkt.forEach(m => document.getElementById('list-verwerkt').appendChild(mailEl(m)));
+  } else {
+    sectV.classList.add('hidden');
+  }
+
+  if (nieuw.length === 0 && verwerkt.length === 0) {
+    document.getElementById('inbox-empty').classList.remove('hidden');
+  }
+}
+
+function mailEl(m) {
+  const el = document.createElement('div');
+  el.className = 'mail-item' + (m.gelezen ? '' : ' unread');
+  const t = m.datum ? new Date(m.datum).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+  el.innerHTML = `
+    <div class="mmeta">
+      <span class="mbadge">${m.platform || 'Mail'}</span>
+      <span class="mtime">${t}</span>
+    </div>
+    <div style="font-weight:500;font-size:14px">${m.subject || '(geen onderwerp)'}</div>
+    <div style="font-size:12px;color:var(--mt2)">${m.snippet || ''}</div>`;
+  el.onclick = () => openMail(m);
+  return el;
+}
+
+async function openMail(m) {
+  S.currentMail = m; m.gelezen = true;
+  badges(); saveAll(); renderInbox();
+  document.getElementById('antw-card').classList.remove('hidden');
+  document.getElementById('kmsg').textContent = m.volledig || m.snippet || '';
+  document.getElementById('aout').textContent = '';
+  document.getElementById('antw-sp').classList.remove('hidden');
+  document.getElementById('scroll').scrollTop = 9999;
+
+  try {
+    const tekst = await claude([{
+      role: 'user',
+      content: `Vriendelijke tweedehands verkoper op ${m.platform || 'een platform'} in België.
+Koper schreef: "${m.volledig || m.snippet}"
+Schrijf een kort, vriendelijk antwoord in het Nederlands. Max 3-4 zinnen.
+Bij prijsonderhandeling: kleine tegemoetkoming maar verdedig je prijs.
+ALLEEN het antwoord, geen inleiding.`
+    }], 300);
+    document.getElementById('aout').textContent = tekst;
+  } catch(e) {
+    document.getElementById('aout').textContent = 'Fout: ' + e.message;
+  }
+  document.getElementById('antw-sp').classList.add('hidden');
+}
+
+function goedkA() {
+  navigator.clipboard.writeText(document.getElementById('aout').textContent).catch(() => {});
+  sluitA();
+}
+
+async function hergenA() {
+  if (!S.currentMail) return;
+  document.getElementById('antw-sp').classList.remove('hidden');
+  document.getElementById('aout').textContent = '';
+  try {
+    const m = S.currentMail;
+    const tekst = await claude([{
+      role: 'user',
+      content: `Vriendelijke tweedehands verkoper op ${m.platform || 'een platform'} België.
+Koper: "${m.volledig || m.snippet}"
+Kort vriendelijk antwoord NL, max 3-4 zinnen. Andere formulering dan vorige keer.
+Bij prijsonderhandeling: kleine tegemoetkoming maar verdedig prijs.
+ALLEEN het antwoord.`
+    }], 300);
+    document.getElementById('aout').textContent = tekst;
+  } catch(e) {
+    document.getElementById('aout').textContent = 'Fout: ' + e.message;
+  }
+  document.getElementById('antw-sp').classList.add('hidden');
+}
+
+function sluitA() { document.getElementById('antw-card').classList.add('hidden'); }
+
+// ── Listings ───────────────────────────────────────────────────────────
+function renderL() {
+  const el = document.getElementById('lb');
+  const a = S.listings.filter(l => l.status === 'actief');
+  if (!a.length) { el.innerHTML = '<div class="empty"><div style="font-size:28px">📋</div>Nog geen listings.</div>'; return; }
+  el.innerHTML = a.map(l => `
+    <div class="lcard">
+      <div style="font-weight:500;font-size:14px">${l.titel}</div>
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+        <span class="mbadge">${l.platform}</span>
+        <span class="sc act">Actief</span>
+        ${l.aantalFotos ? `<span style="font-size:10px;color:var(--mt2)">${l.aantalFotos} foto's</span>` : ''}
+        <span style="font-size:11px;color:var(--mt2);margin-left:auto">${l.datum}</span>
+      </div>
+      <div style="font-size:12px;color:var(--mt2)">${l.prijs} · ${l.staat}</div>
+      <div class="brow" style="margin-top:4px">
+        <button class="btn bg bsm" onclick="cpL(${l.id})">⎘ Kopieer</button>
+        <button class="btn bsm" style="background:rgba(74,240,184,.15);color:var(--acc2);font-family:var(--d);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase" onclick="mkV(${l.id})">✓ Verkocht</button>
+      </div>
+    </div>`).join('');
+}
+
+function cpL(id) {
+  const l = S.listings.find(x => x.id === id);
+  if (l) navigator.clipboard.writeText(`${l.titel}\n\n${l.beschrijving}\n\nPrijs: ${l.prijs}\nStaat: ${l.staat}`).catch(() => {});
+}
+
+async function mkV(id) {
+  const l = S.listings.find(x => x.id === id);
+  if (!l) return;
+  l.status = 'verkocht'; l.verkochtDatum = new Date().toLocaleDateString('nl-BE');
+  badges(); saveAll(); renderL();
+  const urls = {
+    Bpost: 'https://www.bpost.be/nl/verzenddiensten/pakketje-zenden',
+    DPD: 'https://www.dpd.com/be/nl/',
+    PostNL: 'https://www.postnl.be/verzenden/',
+    DHL: 'https://www.dhl.com/be-nl/'
+  };
+  const v = S.verzending.vervoerder;
+  try {
+    const tekst = await claude([{
+      role: 'user',
+      content: `Verkocht op ${l.platform}: "${l.titel}" voor ${l.prijs}. Vervoerder: ${v}.
+Geef een beknopte verzend-checklist (max 5 punten) in het Nederlands.
+Voeg als laatste punt de label-URL toe: ${urls[v] || urls.Bpost}.
+Alleen de checklist, geen inleiding.`
+    }], 300);
+    l.verzendInstructies = tekst;
+    saveAll(); st('verkopen');
+  } catch(e) {}
+}
+
+function renderVerk() {
+  const el = document.getElementById('vb');
+  const v = S.listings.filter(l => l.status === 'verkocht');
+  if (!v.length) { el.innerHTML = '<div class="empty"><div style="font-size:28px">📦</div>Nog geen verkopen.</div>'; return; }
+  el.innerHTML = v.map(l => `
+    <div class="lcard">
+      <div style="font-weight:500;font-size:14px">${l.titel}</div>
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+        <span class="mbadge">${l.platform}</span>
+        <span class="sc verk">Verkocht</span>
+        <span style="font-size:11px;color:var(--mt2);margin-left:auto">${l.verkochtDatum || l.datum}</span>
+      </div>
+      <div style="font-size:12px;color:var(--mt2)">${l.prijs}</div>
+      ${l.verzendInstructies ? `
+        <div class="vcard" style="margin-top:8px">
+          <div style="font-size:9px;font-weight:700;color:var(--acc2);text-transform:uppercase;letter-spacing:.1em;font-family:var(--d);margin-bottom:7px">Verzend-agent</div>
+          <div style="font-size:12px;line-height:1.7;color:var(--mt2);white-space:pre-wrap">${l.verzendInstructies}</div>
+        </div>` : ''}
+    </div>`).join('');
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────
+function cf(id) { navigator.clipboard.writeText(document.getElementById(id).textContent).catch(() => {}); }
+
+function badges() {
+  const n = S.mails.filter(m => !m.gelezen).length;
+  const b = document.getElementById('ibadge');
+  if (n > 0) { b.classList.remove('hidden'); b.textContent = n; } else b.classList.add('hidden');
+}
+
+function saveSetup() {
+  S.gmailLabel = document.getElementById('gmail-label').value.trim() || 'separ8';
+  saveAll();
+  const ok = document.getElementById('setup-ok');
+  ok.classList.remove('hidden');
+  setTimeout(() => ok.classList.add('hidden'), 2000);
+}
+
+function saveVerzending() {
+  S.verzending.vervoerder = document.getElementById('vervoerder').value;
+  S.verzending.adres = document.getElementById('adres').value;
+  saveAll();
+  const ok = document.getElementById('v-ok');
+  ok.classList.remove('hidden');
+  setTimeout(() => ok.classList.add('hidden'), 2000);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>
